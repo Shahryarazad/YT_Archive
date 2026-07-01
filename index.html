@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Video Library</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f0f0f;
+            color: white;
+        }
+
+        header {
+            padding: 15px;
+            background: #181818;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid #222;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            background: #2a2a2a;
+            color: white;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+            padding: 18px;
+        }
+
+        .card {
+            background: #1e1e1e;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.25s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+        }
+
+        .card img {
+            width: 100%;
+            height: 170px;
+            object-fit: cover;
+        }
+
+        .card .title {
+            padding: 12px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .panel {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 16px;
+            width: 420px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            animation: pop 0.2s ease;
+        }
+
+        @keyframes pop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .panel img {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #333;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 12px;
+            color: #ddd;
+        }
+
+        .info {
+            font-size: 13px;
+            color: #aaa;
+            margin: 6px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            margin-top: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .download {
+            background: #00c853;
+            color: white;
+            font-weight: bold;
+        }
+
+        .close {
+            background: #d32f2f;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <input type="text" id="search" placeholder="Search by title or tag...">
+</header>
+
+<div class="grid" id="grid"></div>
+
+<!-- Popup -->
+<div class="overlay" id="overlay">
+    <div class="panel">
+
+        <!-- BIG thumbnail added here -->
+        <img id="panelThumb" src="">
+
+        <h2 id="title"></h2>
+
+        <div class="info" id="duration"></div>
+        <div class="info" id="size"></div>
+
+        <div id="tags"></div>
+
+        <button class="download" id="downloadBtn">Download</button>
+        <button class="close" onclick="closePanel()">Close</button>
+    </div>
+</div>
+
+<script>
+    const videos = [
+        {
+            title: "076",
+            thumbnail: "https://uploadkon.ir/uploads/16ec22_26Screenshot-2026-06-23-013538.png",
+            url: "https://uploadkon.ir/uploads/912e22_26076.zip",
+            duration: "3:21",
+            size: "355 MB",
+            tags: ["Anime", "Black_Clover"]
+        },
+        {
+            title: "Gameplay Clip",
+            thumbnail: "https://via.placeholder.com/400x250",
+            url: "https://example.com/video2.mp4",
+            duration: "10:05",
+            size: "120 MB",
+            tags: ["gaming", "fps"]
+        },
+        {
+            title: "Tutorial",
+            thumbnail: "https://via.placeholder.com/400x250",
+            url: "https://example.com/video3.mp4",
+            duration: "6:40",
+            size: "45 MB",
+            tags: ["education", "coding"]
+        }
+    ];
+
+    const grid = document.getElementById("grid");
+    const search = document.getElementById("search");
+
+    function render(list) {
+        grid.innerHTML = "";
+
+        list.forEach(v => {
+            let card = document.createElement("div");
+            card.className = "card";
+
+            card.innerHTML = `
+            <img src="${v.thumbnail}">
+            <div class="title">${v.title}</div>
+        `;
+
+            card.onclick = () => openPanel(v);
+
+            grid.appendChild(card);
+        });
+    }
+
+    render(videos);
+
+    search.addEventListener("input", () => {
+        let q = search.value.toLowerCase();
+
+        let filtered = videos.filter(v =>
+            v.title.toLowerCase().includes(q) ||
+            v.tags.some(t => t.toLowerCase().includes(q))
+        );
+
+        render(filtered);
+    });
+
+    function openPanel(video) {
+        document.getElementById("overlay").style.display = "flex";
+
+        document.getElementById("panelThumb").src = video.thumbnail;
+        document.getElementById("title").innerText = video.title;
+        document.getElementById("duration").innerText = "Duration: " + video.duration;
+        document.getElementById("size").innerText = "Size: " + video.size;
+
+        let tagHTML = "";
+        video.tags.forEach(t => {
+            tagHTML += `<span class="tag">${t}</span>`;
+        });
+        document.getElementById("tags").innerHTML = tagHTML;
+
+        document.getElementById("downloadBtn").onclick = () => {
+            download(video.url, video.title);
+        };
+    }
+
+    function download(url, name) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function closePanel() {
+        document.getElementById("overlay").style.display = "none";
+    }
+</script>
+
+</body>
+</html>
